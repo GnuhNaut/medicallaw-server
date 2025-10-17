@@ -47,7 +47,7 @@
     <div style="padding:12px 24px 24px 24px;">
         <h2 style="margin:0;font-size:22px;text-align:center; color:#001f4d;">Thank you for your registration!</h2>
         <p style="font-size:16px;">Dear Mr./Ms. <b>{{ $registration->name }}</b>,</p>
-        <p style="font-size:16px;">The Organizing Committee greatly appreciates your registration to attend <strong>THE INTERNATIONAL CONFERENCE ON MERGERS AND ACQUISITIONS (M&A) IN THE HEALTHCARE SECTOR 2025 -HIMA 2025 (1st Edition)</strong>, organized by <strong>Medicallaw</strong>.</p>
+        <p style="font-size:16px;">The Organizing Committee greatly appreciates your registration to attend <strong>THE INTERNATIONAL CONFERENCE ON MERGERS AND ACQUISITIONS (M&A) IN THE HEALTHCARE SECTOR 2025 - HIMA 2025 (1st Edition)</strong>, organized by <strong>Medicallaw</strong>.</p>
 
         <div style="text-align:center; margin: 20px 0;">
           <p style="font-size:14px; margin-top: 10px; color:#666;">
