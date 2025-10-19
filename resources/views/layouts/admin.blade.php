@@ -61,6 +61,9 @@
             </div>
             <div class="nav-links">
                 <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">Dashboard</a>
+                <a href="{{ route('admin.registrations.paid') }}" class="{{ request()->routeIs('admin.registrations.paid') ? 'active' : '' }}">
+                        Đã thanh toán
+                    </a>
                 <a href="{{ route('admin.manual_send.form') }}" class="{{ request()->routeIs('admin.manual_send.form') ? 'active' : '' }}">Gửi Mail Thủ Công</a>
             </div>
             <div class="nav-user">

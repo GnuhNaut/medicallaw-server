@@ -1,24 +1,23 @@
 @extends('layouts.admin')
 
 {{-- Đặt tiêu đề riêng cho trang này --}}
-@section('title', 'Dashboard - Danh sách đăng ký')
+@section('title', 'Dashboard - Danh sách Đã thanh toán')
 
 {{-- Thêm CSS riêng cho trang này nếu cần --}}
 @push('styles')
 <style>
-    /* CSS RIÊNG CHO TRANG DASHBOARD */
+    /* CSS RIÊNG CHO TRANG NÀY (giống dashboard) */
     h1 {
         color: #001f4d;
-        margin-bottom: 1rem; /* Giảm margin 1 chút */
+        margin-bottom: 1rem;
     }
     .table-wrapper {
         background: #fff;
         border: 1px solid #e0e0e0;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        overflow-x: auto; /* Giúp bảng cuộn ngang trên màn hình nhỏ */
+        overflow-x: auto;
     }
-    /* Thêm CSS cho khu vực tìm kiếm */
     .search-wrapper {
         background: #fff;
         padding: 15px;
@@ -54,7 +53,7 @@
     th {
         background-color: #f8f9fa;
         font-weight: bold;
-        white-space: nowrap; /* Giữ tiêu đề trên 1 hàng */
+        white-space: nowrap;
     }
     tr:last-child td {
         border-bottom: none;
@@ -88,9 +87,6 @@
     }
     .btn-checkin { background-color: #28a745; }
     .btn-resend { background-color: #007bff; }
-    /* Thêm màu cho nút Đánh dấu Thanh Toán */
-    .btn-mark-paid { background-color: #ffc107; color: #212529; } 
-
     .btn:disabled { background-color: #6c757d; cursor: not-allowed; opacity: 0.65; }
     .actions-group {
         display: flex;
@@ -101,14 +97,14 @@
 
 {{-- Bắt đầu phần nội dung chính của trang --}}
 @section('content')
-<h1>Danh sách đăng ký</h1>
+<h1>Danh sách Đã thanh toán</h1>
 
-{{-- Form Tìm kiếm --}}
+{{-- Form Tìm kiếm (action trỏ đến route 'admin.registrations.paid') --}}
 <div class="search-wrapper">
-    <form action="{{ route('admin.dashboard') }}" method="GET" style="display: flex; width: 100%; gap: 10px;">
+    <form action="{{ route('admin.registrations.paid') }}" method="GET" style="display: flex; width: 100%; gap: 10px;">
         <input type="text" name="search" placeholder="Tìm theo ID, Ticket ID, Tên, Email, SĐT..." value="{{ $search ?? '' }}">
         <button type="submit" class="btn btn-resend">Tìm kiếm</button>
-        <a href="{{ route('admin.dashboard') }}" class="btn" style="background-color: #6c757d;">Xóa lọc</a>
+        <a href="{{ route('admin.registrations.paid') }}" class="btn" style="background-color: #6c757d;">Xóa lọc</a>
     </form>
 </div>
 
@@ -116,15 +112,16 @@
     <table>
         <thead>
             <tr>
-                {{-- THÊM CỘT TICKET ID --}}
                 <th>Ticket ID</th> 
                 <th>Thông tin Khách</th>
                 <th>Liên hệ</th>
-                {{-- THÊM CỘT NGÀY ĐĂNG KÝ --}}
+                {{-- THÊM CÁC CỘT THÔNG TIN ĐẦY ĐỦ --}}
+                <th>Địa chỉ</th>
+                <th>Loại khách/Lĩnh vực</th>
+                <th>Câu hỏi</th>
+                {{-- ----------------------------- --}}
                 <th>Ngày ĐK</th>
-                <th>Thanh toán</th>
                 <th>Check-in</th>
-                {{-- THÊM CỘT TRẠNG THÁI EMAIL --}}
                 <th>Email</th>
                 <th>Hành động</th>
             </tr>
@@ -133,7 +130,6 @@
             @forelse ($registrations as $reg)
                 <tr>
                     <td>
-                        {{-- Hiển thị Ticket ID --}}
                         <strong style="font-family: monospace; color: #001f4d;">{{ $reg->ticket_id }}</strong>
                     </td>
                     <td>
@@ -142,21 +138,27 @@
                     </td>
                     <td>
                         {{ $reg->email }}<br>
-                        <small style="color: #6c757d;">{{ $reg->phone }}</small> <br>
-                        <small style="color: #6c757d;">{{ $reg->address }}</small>
+                        <small style="color: #6c757d;">{{ $reg->phone }}</small>
+                    </td>
+                    {{-- THÊM DỮ LIỆU CHO CÁC CỘT MỚI --}}
+                    <td>
+                        <small>{{ $reg->address ?? 'N/A' }}</small>
                     </td>
                     <td>
-                        {{-- Hiển thị ngày đăng ký (created_at) --}}
+                        <small>Loại: {{ $reg->guest_type ?? 'N/A' }}</small><br>
+                        <small>Lĩnh vực: {{ $reg->field ?? 'N/A' }}</small>
+                    </td>
+                    <td>
+                        <small>{{ $reg->question ?? 'Không' }}</small>
+                    </td>
+                    {{-- ----------------------------- --}}
+                    <td>
                         <small>{{ $reg->created_at->format('d/m/Y H:i') }}</small>
-                    </td>
-                    <td>
-                        <span class="status status-{{ $reg->payment_status }}">{{ $reg->payment_status }}</span>
                     </td>
                     <td>
                         <span class="status status-{{ $reg->ticket_status }}">{{ str_replace('_', ' ', $reg->ticket_status) }}</span>
                     </td>
                     <td>
-                        {{-- Hiển thị trạng thái gửi email --}}
                         @if ($reg->email_sent_at)
                             <span class="status status-paid" title="Gửi lúc: {{ $reg->email_sent_at->format('d/m/Y H:i') }}">Đã gửi</span>
                         @else
@@ -165,23 +167,16 @@
                     </td>
                     <td>
                         <div class="actions-group">
-                            {{-- THÊM NÚT ĐÁNH DẤU THANH TOÁN --}}
-                            <form action="{{ route('admin.registrations.mark_as_paid', $reg->id) }}" method="POST">
-                                @csrf
-                                <button type="submit" class="btn btn-mark-paid" {{ $reg->payment_status == 'paid' ? 'disabled' : '' }} title="Đánh dấu đã thanh toán">
-                                    Thanh Toán
-                                </button>
-                            </form>
-
+                            {{-- Trang này không cần nút "Thanh Toán" --}}
                             <form action="{{ route('admin.registrations.checkin', $reg->id) }}" method="POST">
                                 @csrf
-                                <button type="submit" class="btn btn-checkin" {{ $reg->payment_status != 'paid' || $reg->ticket_status == 'used' ? 'disabled' : '' }} title="Check-in tại sự kiện">
+                                <button type="submit" class="btn btn-checkin" {{ $reg->ticket_status == 'used' ? 'disabled' : '' }} title="Check-in tại sự kiện">
                                     Check-in
                                 </button>
                             </form>
                             <form action="{{ route('admin.registrations.resend_email', $reg->id) }}" method="POST">
                                 @csrf
-                                <button type="submit" class="btn btn-resend" {{ $reg->payment_status != 'paid' ? 'disabled' : '' }} title="Gửi lại email vé mời">
+                                <button type="submit" class="btn btn-resend" title="Gửi lại email vé mời">
                                     Gửi lại Mail
                                 </button>
                             </form>
@@ -190,8 +185,8 @@
                 </tr>
             @empty
                 <tr>
-                    {{-- Cập nhật colspan thành 8 --}}
-                    <td colspan="8" style="text-align: center; padding: 20px;">Không tìm thấy lượt đăng ký nào.</td>
+                    {{-- Cập nhật colspan (10 cột) --}}
+                    <td colspan="10" style="text-align: center; padding: 20px;">Không tìm thấy lượt đăng ký nào đã thanh toán.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -200,7 +195,6 @@
 
 {{-- Thêm link phân trang --}}
 <div class="pagination-wrapper" style="margin-top: 20px;">
-    {{-- Thêm appends để giữ nguyên tham số search khi chuyển trang --}}
     {{ $registrations->appends(['search' => $search ?? ''])->links() }}
 </div>
 

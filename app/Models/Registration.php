@@ -16,14 +16,27 @@ class Registration extends Model
      */
     protected $fillable = [
         'ticket_id',
-    'name',
-    'position',
-    'members', // Thêm
-    'email',
-    'phone',
-    'address',   // Thêm
-    'question',  // Thêm
-    'guest_type',// Thêm (thay cho 'type')
-    'field',     // Thêm
+        'name',
+        'position',
+        'members', 
+        'email',
+        'phone',
+        'address',   // Đảm bảo có
+        'question',  // Đảm bảo có
+        'guest_type',// Đảm bảo có
+        'field',     // Đảm bảo có
+        'payment_status', // Thêm 2 trường này để `markAsPaid` hoạt động
+        'email_sent_at',  // (Mặc dù $fillable chủ yếu cho create/update hàng loạt,
+                          // nhưng `markAsPaid` có dùng `save()` nên không bị ảnh hưởng)
+                          // Cứ để $fillable như cũ là đủ.
+    ];
+
+    /**
+     * Chuyển đổi kiểu dữ liệu của thuộc tính.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'email_sent_at' => 'datetime',
     ];
 }

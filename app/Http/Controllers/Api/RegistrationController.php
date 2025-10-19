@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Services\VietQRService;
 use App\Mail\AdminNotificationMail;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\ThankYouMail;
 
 class RegistrationController extends Controller
 {
@@ -124,6 +125,42 @@ class RegistrationController extends Controller
             ]
         ]);
     }
+    public function getMemberInfo($ticket_id)
+    {
+        // 1. Tìm lượt đăng ký trong database bằng ticket_id
+        $registration = Registration::where('ticket_id', $ticket_id)->first();
+
+        // 2. Nếu không tìm thấy, trả về lỗi 404 Not Found
+        if (!$registration) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy thông tin đăng ký.'
+            ], 404);
+        }
+
+        if ($registration->payment_status !== 'paid') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn chưa thanh toán phí đăng ký thành viên.'
+            ], 404);
+        }
+
+        // 3. Nếu tìm thấy, kiểm tra xem đã có dữ liệu VietQR chưa
+        // if (empty($registration->vietqr_data)) {
+        //      return response()->json([
+        //         'success' => false,
+        //         'message' => 'Thông tin thanh toán chưa được tạo.'
+        //     ], 404);
+        // }
+
+        // 4. Trả về các thông tin cần thiết cho frontend
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'registration' => $registration
+            ]
+        ]);
+    }
     public function handleVietQRCallback(Request $request)
     {
         // Lấy dữ liệu callback từ VietQR
@@ -180,7 +217,9 @@ class RegistrationController extends Controller
 
             // Phản hồi lại cho VietQR rằng đã nhận và xử lý thành công
             Mail::to($registration->email)->send(new ThankYouMail($registration));
-
+            
+            $registration->email_sent_at = now();
+            $registration->save();
             return response()->json([
                 'success' => true,
                 'message' => 'Thanh toán đã được xác nhận thành công.'
