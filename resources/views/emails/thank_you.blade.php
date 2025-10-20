@@ -20,7 +20,7 @@
             Mã QR Code của bạn đã được đính kèm trong email này.<br>
             Vui lòng tải xuống và sử dụng mã QR này để check-in tại sự kiện.
           </p>
-          <img src="{{ $message->embedData($qrCodeString, 'qr-code-' . $registration->ticket_id . '.png') }}" 
+          <img src="{{ $message->embedData($qrCodeString, 'qr-code.png') }}" 
                alt="Ma QR Code" style="width:250px; height:250px; max-width:100%; margin-top:15px; border:1px solid #e0e0e0;">
       </div>
 
@@ -59,7 +59,7 @@
             Your QR Code is attached to this email.<br>
             Please download and use this QR code to check-in at the event.
           </p>
-          <img src="{{ $message->embedData($qrCodeString, 'qr-code-' . $registration->ticket_id . '.png') }}" 
+          <img src="{{ $message->embedData($qrCodeString, 'qr-code.png') }}" 
                alt="Ma QR Code" style="width:250px; height:250px; max-width:100%; margin-top:15px; border:1px solid #e0e0e0;">
         </div>
 
