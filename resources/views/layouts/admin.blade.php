@@ -6,6 +6,7 @@
     {{-- Tiêu đề trang sẽ được các trang con định nghĩa --}}
     <title>@yield('title', 'Admin Dashboard')</title>
     <link href="https://fonts.googleapis.com/css?family=Nunito" rel="stylesheet">
+    @vite(['resources/sass/app.scss', 'resources/js/app.js'])
     <style>
         /* CSS CHUNG CHO TOÀN BỘ TRANG ADMIN */
         body { font-family: 'Nunito', sans-serif; background-color: #f8f9fa; color: #333; margin: 0; }
