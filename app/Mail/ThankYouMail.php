@@ -34,7 +34,7 @@ class ThankYouMail extends Mailable
         $this->logoPath = public_path('medicallaw.png');
         $this->ticketId = $this->registration->ticket_id;
         
-        $ticketUrl = url('/member/' . $this->registration->ticket_id);
+        $ticketUrl = url('https://event.medicallaw.vn/member/' . $this->registration->ticket_id);
         
         $builder = new Builder(
             writer: new PngWriter(),
@@ -49,7 +49,6 @@ class ThankYouMail extends Mailable
             logoPath: $this->logoPath,
             logoResizeToWidth: 50,
             logoPunchoutBackground: true,
-            labelText: 'Scan để xem vé',
             labelFont: new OpenSans(20),
             labelAlignment: LabelAlignment::Center
         );
@@ -82,6 +81,7 @@ class ThankYouMail extends Mailable
             with: [
                 'logoPath' => $this->logoPath,
                 'registration' => $this->registration,
+                'qrCodeString' => $this->qrCodeString,
             ],
         );
     }
