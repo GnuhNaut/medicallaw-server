@@ -16,7 +16,13 @@ class RegistrationController extends Controller
 {
     public function submitForm(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $data = $request->all();
+
+        if (isset($data['members'])) {
+            $data['members'] = (int) $data['members']; 
+        }
+
+        $validator = Validator::make($data, [
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20',
@@ -106,12 +112,12 @@ class RegistrationController extends Controller
         }
 
         // 3. Nếu tìm thấy, kiểm tra xem đã có dữ liệu VietQR chưa
-        if (empty($registration->vietqr_data)) {
-             return response()->json([
-                'success' => false,
-                'message' => 'Thông tin thanh toán chưa được tạo.'
-            ], 404);
-        }
+        // if (empty($registration->vietqr_data)) {
+        //      return response()->json([
+        //         'success' => false,
+        //         'message' => 'Thông tin thanh toán chưa được tạo.'
+        //     ], 404);
+        // }
 
         // 4. Trả về các thông tin cần thiết cho frontend
         return response()->json([
@@ -121,6 +127,7 @@ class RegistrationController extends Controller
                 'name' => $registration->name,
                 'email' => $registration->email,
                 'payment_status' => $registration->payment_status,
+                'members' => $registration->members,
                 'qr_code_url' => $registration->vietqr_data['qrDataURL'] ?? null // Lấy URL ảnh QR
             ]
         ]);

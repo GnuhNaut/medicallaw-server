@@ -117,6 +117,7 @@
                 <th>Liên hệ</th>
                 {{-- THÊM CÁC CỘT THÔNG TIN ĐẦY ĐỦ --}}
                 <th>Địa chỉ</th>
+                <th>Thành viên</th>
                 <th>Loại khách/Lĩnh vực</th>
                 <th>Câu hỏi</th>
                 {{-- ----------------------------- --}}
@@ -143,6 +144,9 @@
                     {{-- THÊM DỮ LIỆU CHO CÁC CỘT MỚI --}}
                     <td>
                         <small>{{ $reg->address ?? 'N/A' }}</small>
+                    </td>
+                    <td>
+                        <small>{{ $reg->members ?? '1' }}</small>
                     </td>
                     <td>
                         <small>Loại: {{ $reg->guest_type ?? 'N/A' }}</small><br>

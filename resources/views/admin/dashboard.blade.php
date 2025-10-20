@@ -122,10 +122,11 @@
                 <th>Liên hệ</th>
                 {{-- THÊM CỘT NGÀY ĐĂNG KÝ --}}
                 <th>Ngày ĐK</th>
+                <th>Số thành viên</th>
                 <th>Thanh toán</th>
-                <th>Check-in</th>
+                <!-- <th>Check-in</th> -->
                 {{-- THÊM CỘT TRẠNG THÁI EMAIL --}}
-                <th>Email</th>
+                <!-- <th>Email</th> -->
                 <th>Hành động</th>
             </tr>
         </thead>
@@ -150,19 +151,22 @@
                         <small>{{ $reg->created_at->format('d/m/Y H:i') }}</small>
                     </td>
                     <td>
+                        {{ $reg->members ?? 1 }}
+                    </td>
+                    <td>
                         <span class="status status-{{ $reg->payment_status }}">{{ $reg->payment_status }}</span>
                     </td>
-                    <td>
+                    <!-- <td>
                         <span class="status status-{{ $reg->ticket_status }}">{{ str_replace('_', ' ', $reg->ticket_status) }}</span>
-                    </td>
-                    <td>
+                    </td> -->
+                    <!-- <td>
                         {{-- Hiển thị trạng thái gửi email --}}
                         @if ($reg->email_sent_at)
                             <span class="status status-paid" title="Gửi lúc: {{ $reg->email_sent_at->format('d/m/Y H:i') }}">Đã gửi</span>
                         @else
                             <span class="status status-pending">Chưa gửi</span>
                         @endif
-                    </td>
+                    </td> -->
                     <td>
                         <div class="actions-group">
                             {{-- THÊM NÚT ĐÁNH DẤU THANH TOÁN --}}
@@ -173,18 +177,18 @@
                                 </button>
                             </form>
 
-                            <form action="{{ route('admin.registrations.checkin', $reg->id) }}" method="POST">
+                            <!-- <form action="{{ route('admin.registrations.checkin', $reg->id) }}" method="POST">
                                 @csrf
                                 <button type="submit" class="btn btn-checkin" {{ $reg->payment_status != 'paid' || $reg->ticket_status == 'used' ? 'disabled' : '' }} title="Check-in tại sự kiện">
                                     Check-in
                                 </button>
-                            </form>
-                            <form action="{{ route('admin.registrations.resend_email', $reg->id) }}" method="POST">
+                            </form> -->
+                            <!-- <form action="{{ route('admin.registrations.resend_email', $reg->id) }}" method="POST">
                                 @csrf
                                 <button type="submit" class="btn btn-resend" {{ $reg->payment_status != 'paid' ? 'disabled' : '' }} title="Gửi lại email vé mời">
                                     Gửi lại Mail
                                 </button>
-                            </form>
+                            </form> -->
                         </div>
                     </td>
                 </tr>

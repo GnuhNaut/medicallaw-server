@@ -45,7 +45,7 @@
         .nav-user #logout-form button:hover {
             color: #ffd700;
         }
-        .container { max-width: 1200px; margin: 2rem auto; padding: 0 2rem; }
+        .container { max-width: 1500px; margin: 2rem auto; padding: 0 2rem; }
         .alert { padding: 1rem; margin-bottom: 1rem; border-radius: 4px; }
         .alert-success { background-color: #d4edda; color: #155724; }
         .alert-error { background-color: #f8d7da; color: #721c24; }
