@@ -17,7 +17,12 @@ class VerifyVietQRToken
 
         if (!$token || !$storedToken || $token !== $storedToken) {
             Log::warning('Truy cập bị từ chối (Token không hợp lệ): ' . $token);
-            return response()->json(['success' => false, 'message' => 'Token không hợp lệ'], 401);
+            return response()->json([
+                'error' => true,
+                'errorReason' => "UNAUTHORIZED",
+                'toastMessage' => "Token không hợp lệ hoặc không được cung cấp.",
+                'object' => null
+            ], 401);
         }
 
         return $next($request);
