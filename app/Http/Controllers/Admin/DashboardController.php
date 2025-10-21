@@ -7,6 +7,8 @@ use App\Models\Registration;
 use App\Mail\ThankYouMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request; // Đảm bảo đã import Request
+use App\Services\VietQRService;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
@@ -166,5 +168,66 @@ class DashboardController extends Controller
 
         // 5. Nếu tìm thấy và đã thanh toán, gọi lại hàm gửi mail
         return $this->resendEmail($registration->id);
+    }
+
+    public function triggerTestPayment(Request $request, $id)
+    {
+        $registration = Registration::findOrFail($id);
+        
+        if ($registration->payment_status !== 'pending') {
+            return back()->with('error', 'Vé này đã được thanh toán, không thể test.');
+        }
+
+        try {
+            $vietQRService = new VietQRService();
+            $amount = (int)$registration->members * (int)config('services.vietqr.price_ticket');
+            $content = $registration->ticket_id;
+
+            $result = $vietQRService->triggerTestCallback($amount, $content);
+            Log::info('Kết quả Test Payment cho đăng ký ID ' . $id . ': ', $result ?? []);
+            if ($result['success']) {
+                return back()->with('success', 'Đã gửi yêu cầu test. Vui lòng đợi (1-5 phút) hệ thống tự động cập nhật.');
+            } else {
+                return back()->with('error', 'Lỗi khi gọi API Test: ' . ($result['message'] ?? 'Không rõ'));
+            }
+        } catch (\Exception $e) {
+            return back()->with('error', 'Lỗi ngoại lệ khi test: ' . $e->getMessage());
+        }
+    }
+
+    public function regenerateQR(Request $request, $id)
+    {
+        $registration = Registration::findOrFail($id);
+        
+        // Chỉ chạy khi vé chưa thanh toán
+        if ($registration->payment_status === 'paid') {
+            return back()->with('error', 'Vé đã thanh toán, không thể tạo lại QR.');
+        }
+
+        try {
+            $vietQRService = new VietQRService();
+            // Lấy thông tin từ config
+            $amount = (int)$registration->members * (int)config('services.vietqr.price_ticket');
+            $accountNo = config('services.vietqr.account_no');
+            $accountName = config('services.vietqr.account_name');
+            $content = $registration->ticket_id;
+
+            // Gọi API tạo QR (đã hoàn thiện ở các bước trước)
+            $qrData = $vietQRService->generateQRCode($amount, $content, $accountNo, $accountName);
+            Log::info('Kết quả tạo lại QR cho đăng ký ID ' . $id . ': ', $qrData ?? []);
+            // Kiểm tra kết quả (theo response của API mới)
+            if ($qrData && isset($qrData['qrCode'])) {
+                $registration->vietqr_data = $qrData; // Lưu toàn bộ JSON response
+                $registration->save();
+                return back()->with('success', 'Đã tạo lại mã QR thành công!');
+            } else {
+                Log::error('Admin test tạo QR thất bại: ' . $registration->ticket_id, $qrData ?? []);
+                return back()->with('error', 'Tạo lại QR thất bại. Vui lòng kiểm tra log.');
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Lỗi ngoại lệ khi admin tạo QR: ' . $e->getMessage());
+            return back()->with('error', 'Lỗi ngoại lệ: ' . $e->getMessage());
+        }
     }
 }

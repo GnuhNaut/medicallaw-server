@@ -176,7 +176,18 @@
                                     Thanh Toán
                                 </button>
                             </form>
-
+                            <form action="{{ route('admin.registrations.test_payment', $reg->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-resend" style="background-color: #6f42c1;" {{ $reg->payment_status == 'paid' ? 'disabled' : '' }} title="Giả lập thanh toán thành công">
+                                    Test Call
+                                </button>
+                            </form>
+                            <form action="{{ route('admin.registrations.regenerate_qr', $reg->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn" style="background-color: #ff9800;" {{ $reg->payment_status == 'paid' ? 'disabled' : '' }} title="Test API: Tạo/Cập nhật mã QR">
+                                    Tạo lại QR
+                                </button>
+                            </form>
                             <!-- <form action="{{ route('admin.registrations.checkin', $reg->id) }}" method="POST">
                                 @csrf
                                 <button type="submit" class="btn btn-checkin" {{ $reg->payment_status != 'paid' || $reg->ticket_status == 'used' ? 'disabled' : '' }} title="Check-in tại sự kiện">

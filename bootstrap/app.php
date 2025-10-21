@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'api/vietqr-callback',
         ]);
+        $middleware->alias([
+            'vietqr.auth' => \App\Http\Middleware\VerifyVietQRToken::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

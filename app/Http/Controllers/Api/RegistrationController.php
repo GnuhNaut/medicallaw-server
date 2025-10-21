@@ -11,6 +11,8 @@ use App\Services\VietQRService;
 use App\Mail\AdminNotificationMail;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ThankYouMail;
+use Illuminate\Support\Facades\Log; 
+use Illuminate\Support\Facades\Schema;
 
 class RegistrationController extends Controller
 {
@@ -60,22 +62,20 @@ class RegistrationController extends Controller
             if ($adminEmail) {
                 Mail::to($adminEmail)->send(new AdminNotificationMail($registration));
             }
-            // Bước 2: Gọi VietQR Service để tạo mã QR
-            // $vietQRService = new VietQRService();
-            // $amount = 100000; // Ví dụ số tiền vé là 100,000 VND
-            // $qrData = $vietQRService->generateQRCode(
-            //     $amount,
-            //     $registration->ticket_id, // Nội dung chuyển khoản chính là ID vé
-            //     config('services.vietqr.account_no'),
-            //     config('services.vietqr.account_name')
-            // );
+            
+            $vietQRService = new VietQRService();
+            $amount = (int)$registration->members * (int)config('services.vietqr.price_ticket');
+            $accountNo = config('services.vietqr.account_no');
+            $accountName = config('services.vietqr.account_name');
+            $content = $registration->ticket_id;
 
+            $qrData = $vietQRService->generateQRCode($amount, $content, $accountNo, $accountName);
             // Bước 3: Kiểm tra và cập nhật lại DB với dữ liệu QR
             // if ($qrData && $qrData['code'] == '00') {
-            if (true) {
-                // $registration->vietqr_data = 'qr'; // Lưu phần data trả về
-                // $registration->vietqr_data = $qrData['data']; // Lưu phần data trả về
+            if ($qrData && isset($qrData['qrCode'])) {
+                $registration->vietqr_data = $qrData; 
                 $registration->save();
+            // if(true) {
             } else {
                 // Xử lý khi gọi API VietQR thất bại
                 // Có thể xóa bản ghi vừa tạo hoặc đánh dấu là lỗi
@@ -100,26 +100,13 @@ class RegistrationController extends Controller
 
     public function getPaymentInfo($ticket_id)
     {
-        // 1. Tìm lượt đăng ký trong database bằng ticket_id
         $registration = Registration::where('ticket_id', $ticket_id)->first();
-
-        // 2. Nếu không tìm thấy, trả về lỗi 404 Not Found
         if (!$registration) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Không tìm thấy thông tin đăng ký.'
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy thông tin đăng ký.'], 404);
         }
-
-        // 3. Nếu tìm thấy, kiểm tra xem đã có dữ liệu VietQR chưa
-        // if (empty($registration->vietqr_data)) {
-        //      return response()->json([
-        //         'success' => false,
-        //         'message' => 'Thông tin thanh toán chưa được tạo.'
-        //     ], 404);
+        // if (empty($registration->vietqr_data) || !isset($registration->vietqr_data['qrDataURL'])) {
+        //      return response()->json(['success' => false, 'message' => 'Thông tin thanh toán (mã QR) chưa được tạo.'], 404);
         // }
-
-        // 4. Trả về các thông tin cần thiết cho frontend
         return response()->json([
             'success' => true,
             'data' => [
@@ -128,10 +115,11 @@ class RegistrationController extends Controller
                 'email' => $registration->email,
                 'payment_status' => $registration->payment_status,
                 'members' => $registration->members,
-                'qr_code_url' => $registration->vietqr_data['qrDataURL'] ?? null // Lấy URL ảnh QR
+                'qr_code_data' => json_decode($registration->vietqr_data) ?? null // Trả về QR Code (Base64)
             ]
         ]);
     }
+    
     public function getMemberInfo($ticket_id)
     {
         // 1. Tìm lượt đăng ký trong database bằng ticket_id
@@ -168,76 +156,109 @@ class RegistrationController extends Controller
             ]
         ]);
     }
+
     public function handleVietQRCallback(Request $request)
     {
-        // Lấy dữ liệu callback từ VietQR
+        Log::info('VietQR Callback Received:', $request->all());
         $callbackData = $request->json()->all();
 
-        // Ghi lại toàn bộ dữ liệu callback để debug (rất quan trọng!)
-        // Trong thực tế, bạn sẽ dùng Log::info()
-        file_put_contents('vietqr_callback.log', json_encode($callbackData, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
-
-        // **BẢO MẬT**: Bạn nên kiểm tra xem request có thực sự đến từ VietQR không.
-        // Ví dụ: kiểm tra địa chỉ IP nguồn của request nếu VietQR cung cấp danh sách IP cố định.
-        // $request->ip()
-
-        // Lấy các thông tin cần thiết từ callback
-        // Dựa vào tài liệu của VietQR, nội dung chuyển khoản là `description`
-        $ticketId = $callbackData['description'] ?? null;
+        // Lấy các thông tin từ callback
+        $ticketId = $callbackData['orderId'] ?? $callbackData['content'] ?? null;
         $amount = $callbackData['amount'] ?? 0;
-        $transactionId = $callbackData['transactionId'] ?? null; // Mã giao dịch của ngân hàng
+        // Lấy transactionId để trả về cho VietQR (nếu có)
+        $refTransactionId = $callbackData['transactionId'] ?? $callbackData['reftransactionid'] ?? $ticketId;
 
-        // --- Bắt đầu xác thực giao dịch ---
+        // --- Định nghĩa Response Format (theo tài liệu) ---
+        $responseError = function (string $reason, string $message, int $statusCode = 400) {
+            return response()->json([
+                'error' => true,
+                'errorReason' => $reason,
+                'toastMessage' => $message,
+                'object' => null
+            ], $statusCode);
+        };
 
-        // 1. Kiểm tra có ticketId không
+        $responseSuccess = function ($refId, string $message = "Giao dịch thành công") {
+            return response()->json([
+                'error' => false,
+                'errorReason' => null,
+                'toastMessage' => $message,
+                'object' => [
+                    'reftransactionid' => $refId
+                ]
+            ], 200);
+        };
+        // --------------------------------------------------
+
+
         if (!$ticketId) {
-            // Không có mã vé, không xử lý
-            return response()->json(['success' => false, 'message' => 'Mô tả giao dịch không hợp lệ.']);
+            Log::warning('VietQR Callback: Mô tả giao dịch không hợp lệ.', $callbackData);
+            // Lỗi 400: Mô tả không hợp lệ
+            return $responseError('INVALID_DESCRIPTION', 'Mô tả giao dịch không hợp lệ.');
         }
 
-        // 2. Tìm lượt đăng ký trong DB
         $registration = Registration::where('ticket_id', $ticketId)->first();
         if (!$registration) {
-            // Không tìm thấy vé, có thể ai đó chuyển nhầm
-            return response()->json(['success' => false, 'message' => 'Không tìm thấy mã đăng ký.']);
+            Log::warning('VietQR Callback: Không tìm thấy mã đăng ký.', $callbackData);
+            // Lỗi 400: Không tìm thấy
+            return $responseError('REGISTRATION_NOT_FOUND', 'Không tìm thấy mã đăng ký.');
         }
-
-        // 3. Kiểm tra xem đã thanh toán chưa để tránh xử lý nhiều lần
+        
         if ($registration->payment_status === 'paid') {
-            return response()->json(['success' => true, 'message' => 'Giao dịch đã được xử lý trước đó.']);
+            // Thành công 200: Giao dịch đã được xử lý
+            return $responseSuccess($refTransactionId, 'Giao dịch đã được xử lý trước đó.');
         }
 
-        // 4. Kiểm tra số tiền
-        $expectedAmount = 100000; // Số tiền vé dự kiến, bạn nên lưu giá trị này vào DB cùng lúc đăng ký
+        // Lấy giá vé từ config (giả sử bạn đã thêm vào config/services.php)
+        $pricePerTicket = config('services.vietqr.price_ticket', 2000000); // Mặc định 100k
+        $expectedAmount = (int)$registration->members * (int)$pricePerTicket;
+
         if ($amount < $expectedAmount) {
-            // Số tiền không khớp, có thể ghi nhận là thanh toán thiếu
-            return response()->json(['success' => false, 'message' => 'Số tiền thanh toán không đủ.']);
+            Log::warning('VietQR Callback: Số tiền không đủ.', $callbackData);
+            // Lỗi 400: Số tiền không đủ
+            return $responseError('INSUFFICIENT_AMOUNT', 'Số tiền thanh toán không đủ.');
         }
 
-        // --- Giao dịch hợp lệ, cập nhật trạng thái ---
         try {
             $registration->payment_status = 'paid';
             $registration->save();
 
-            // Ở bước tiếp theo, chúng ta sẽ kích hoạt gửi email cảm ơn kèm QR code vé từ đây.
-            // Ví dụ: SendThankYouEmail::dispatch($registration);
-
-            // Phản hồi lại cho VietQR rằng đã nhận và xử lý thành công
             Mail::to($registration->email)->send(new ThankYouMail($registration));
             
-            $registration->email_sent_at = now();
-            $registration->save();
-            return response()->json([
-                'success' => true,
-                'message' => 'Thanh toán đã được xác nhận thành công.'
-            ]);
+            // Cập nhật email_sent_at (nếu có cột)
+            if (Schema::hasColumn('registrations', 'email_sent_at')) {
+                $registration->email_sent_at = now();
+                $registration->save();
+            }
+            
+            // Thành công 200: Xử lý thành công
+            return $responseSuccess($refTransactionId, 'Thanh toán đã được xác nhận thành công.');
 
         } catch (\Exception $e) {
+            Log::error('Lỗi khi xử lý Callback VietQR: ' . $e->getMessage(), $callbackData);
+            // Lỗi 400 (hoặc 500): Lỗi hệ thống nội bộ
+            return $responseError('INTERNAL_ERROR', 'Lỗi khi cập nhật DB hoặc gửi email.', 500); 
+            // Lưu ý: Tài liệu yêu cầu 400, nhưng 500 (Internal Server Error) 
+            // có thể hợp lý hơn cho lỗi hệ thống. Bạn có thể đổi 500 thành 400 nếu muốn.
+        }
+    }
+
+    public function checkPaymentStatus($ticket_id)
+    {
+        $registration = Registration::where('ticket_id', $ticket_id)->first(['payment_status', 'ticket_id']); // Chỉ lấy trường cần thiết
+
+        if (!$registration) {
             return response()->json([
                 'success' => false,
-                'message' => 'Lỗi khi cập nhật cơ sở dữ liệu.',
-                'error' => $e->getMessage()
-            ], 500);
+                'message' => 'Không tìm thấy thông tin đăng ký.'
+            ], 404);
         }
+
+        // Trả về trạng thái hiện tại
+        return response()->json([
+            'success' => true,
+            'ticket_id' => $registration->ticket_id,
+            'payment_status' => $registration->payment_status ?? 'pending' // Giả sử mặc định là 'pending' nếu null
+        ]);
     }
 }

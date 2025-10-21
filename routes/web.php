@@ -18,10 +18,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // Route hiển thị dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // === THÊM ROUTE MỚI ===
     // Route hiển thị danh sách ĐÃ THANH TOÁN
     Route::get('/paid-registrations', [DashboardController::class, 'paidList'])->name('registrations.paid');
-    // === KẾT THÚC THÊM MỚI ===
 
     // Route để xử lý check-in vé
     Route::post('/registrations/{id}/checkin', [DashboardController::class, 'checkIn'])->name('registrations.checkin');
@@ -32,6 +30,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // Route để đánh dấu đã thanh toán
     Route::post('/registrations/{id}/mark-as-paid', [DashboardController::class, 'markAsPaid'])->name('registrations.mark_as_paid');
 
+    Route::post('/registrations/{id}/test-payment', [DashboardController::class, 'triggerTestPayment'])->name('registrations.test_payment');
+    Route::post('/registrations/{id}/regenerate-qr', [DashboardController::class, 'regenerateQR'])->name('registrations.regenerate_qr');
     Route::get('/manual-send', [DashboardController::class, 'showManualSendForm'])->name('manual_send.form');
     // Route để xử lý việc gửi mail thủ công
     Route::post('/manual-send', [DashboardController::class, 'handleManualSend'])->name('manual_send.submit');

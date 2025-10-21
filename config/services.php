@@ -14,11 +14,15 @@ return [
     |
     */
     'vietqr' => [
+        'api_url' => env('VIETQR_API_URL', 'https://api.vietqr.io'),
         'client_id' => env('VIETQR_CLIENT_ID'),
         'api_key' => env('VIETQR_API_KEY'),
+        'bin' => env('VIETQR_BIN'),
         'account_no' => env('VIETQR_ACCOUNT_NO'),
         'account_name' => env('VIETQR_ACCOUNT_NAME'),
-        'template' => env('VIETQR_TEMPLATE', 'print'),
+        'webhook_user' => env('VIETQR_WEBHOOK_USER'),
+        'webhook_pass' => env('VIETQR_WEBHOOK_PASS'),
+        'price_ticket' => env('VIETQR_PRICE_TICKET'),
     ],
     
     'postmark' => [
