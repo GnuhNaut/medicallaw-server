@@ -32,7 +32,7 @@ class RegistrationController extends Controller
             'position' => 'nullable|string|max:255',
             'members' => 'nullable|integer|min:1',
             'question' => 'nullable|string',
-            'guestType' => 'nullable|string', // Tên key từ frontend là guestType
+            'guest_type' => 'nullable|string', // Tên key từ frontend là guestType
             'field' => 'nullable|string',
         ]);
     
@@ -55,7 +55,7 @@ class RegistrationController extends Controller
                 'phone' => $request->input('phone'),
                 'address' => $request->input('address'),
                 'question' => $request->input('question'),
-                'guest_type' => $request->input('guestType'), // Ánh xạ guestType vào guest_type
+                'guest_type' => $request->input('guest_type'),                 
                 'field' => $request->input('field'),
             ]);            
             $adminEmail = config('mail.admin_address');
