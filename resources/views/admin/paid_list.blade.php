@@ -150,14 +150,15 @@
                     </td>
                     <td>
                         <small>Loại: {{ $reg->guest_type ?? 'N/A' }}</small><br>
-                        <small>Lĩnh vực: {{ $reg->field ?? 'N/A' }}</small>
+                        <small>Lĩnh vực: {{ $reg->field ?? 'N/A' }}</small></br>
+                        <span style="color: green; margin-top: 5px">Nguồn: {{ $reg->source ?? 'Không' }}</span>
                     </td>
                     <td>
                         <small>{{ $reg->question ?? 'Không' }}</small>
                     </td>
                     {{-- ----------------------------- --}}
                     <td>
-                        <small>{{ $reg->created_at->format('d/m/Y H:i') }}</small>
+                        <small>{{ $reg->created_at->format('d/m/Y H:i') }}</small></br>
                     </td>
                     <td>
                         <span class="status status-{{ $reg->ticket_status }}">{{ str_replace('_', ' ', $reg->ticket_status) }}</span>

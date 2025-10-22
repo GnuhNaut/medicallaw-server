@@ -120,6 +120,7 @@
                 <th>Ticket ID</th> 
                 <th>Thông tin Khách</th>
                 <th>Liên hệ</th>
+                <th>Nguồn</th>
                 {{-- THÊM CỘT NGÀY ĐĂNG KÝ --}}
                 <th>Ngày ĐK</th>
                 <th>Số thành viên</th>
@@ -145,6 +146,9 @@
                         {{ $reg->email }}<br>
                         <small style="color: #6c757d;">{{ $reg->phone }}</small> <br>
                         <small style="color: #6c757d;">{{ $reg->address }}</small>
+                    </td>
+                    <td>
+                        {{ $reg->source }}
                     </td>
                     <td>
                         {{-- Hiển thị ngày đăng ký (created_at) --}}

@@ -24,11 +24,10 @@ class Registration extends Model
         'address',   // Đảm bảo có
         'question',  // Đảm bảo có
         'guest_type',// Đảm bảo có
-        'field',     // Đảm bảo có
-        'payment_status', // Thêm 2 trường này để `markAsPaid` hoạt động
-        'email_sent_at',  // (Mặc dù $fillable chủ yếu cho create/update hàng loạt,
-                          // nhưng `markAsPaid` có dùng `save()` nên không bị ảnh hưởng)
-                          // Cứ để $fillable như cũ là đủ.
+        'field',   
+        'payment_status',
+        'email_sent_at', 
+        'source',
     ];
 
     /**

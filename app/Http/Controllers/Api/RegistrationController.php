@@ -34,6 +34,7 @@ class RegistrationController extends Controller
             'question' => 'nullable|string',
             'guest_type' => 'nullable|string', // Tên key từ frontend là guestType
             'field' => 'nullable|string',
+            'source' => 'nullable|string|max:255',
         ]);
     
         if ($validator->fails()) {
@@ -57,6 +58,7 @@ class RegistrationController extends Controller
                 'question' => $request->input('question'),
                 'guest_type' => $request->input('guest_type'),                 
                 'field' => $request->input('field'),
+                'source' => $data['source'] ?? null,
             ]);            
             $adminEmail = config('mail.admin_address');
             if ($adminEmail) {
